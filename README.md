@@ -3,7 +3,7 @@
 修改作者3年前的项目，适配2025年官方网页版规则
 
 # 修改内容
-1.新增Aria2 PRC密匙
+1.新增Aria2 RPC密匙
 2.适配目前每页只可读取50项内容
 
 #### 配置说明：
@@ -32,7 +32,7 @@ Stop = 1024
 [Air2]
 #Air2 RPC
 JsonRpcUrl = http://localhost:16800/jsonrpc
-RPC_SECRET = PRC密匙
+RPC_SECRET = RPC密匙
 #下载至目录
 Outfloder = E:\下载目录
 #下载间隔
