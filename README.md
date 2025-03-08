@@ -1,6 +1,10 @@
 # 说明
 
-很久之前的项目，最近频繁收到`issues` 。图省事把gui等删了重写……
+修改作者3年前的项目，适配2025年官方网页版规则
+
+# 修改内容
+1.新增Aria2 PRC密匙
+2.适配目前每页只可读取50项内容
 
 #### 配置说明：
 
@@ -20,7 +24,7 @@ password = &QaQKgHW6V4&JuoO
 #下载范围
 [DownLoadRange]
 #开始集数
-Start = 1020
+Start = 1
 #结束集数
 Stop = 1024
 
@@ -28,6 +32,7 @@ Stop = 1024
 [Air2]
 #Air2 RPC
 JsonRpcUrl = http://localhost:16800/jsonrpc
+RPC_SECRET = PRC密匙
 #下载至目录
 Outfloder = E:\下载目录
 #下载间隔
