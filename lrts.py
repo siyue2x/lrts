@@ -5,6 +5,7 @@ Created on Sat Apr  2 17:45:33 2022
 @author: fuwen
 """
 import requests,base64,configparser,re,json,time
+import random
 
 conf = configparser.ConfigParser()
 conf.read('config.ini', encoding="utf-8-sig")
@@ -23,16 +24,17 @@ def login(account,password):
     print('当前登录账号：%s'%phone)
 
 # 调用Air2下载
-def Air2DownLoad(JsonRpcUrl,DownloadUrl,Mp3Name):
+def Air2DownLoad(JsonRpcUrl,RPC_SECRET,DownloadUrl,Mp3Name):
     PostData = {
         "jsonrpc":"2.0",
         "method":"aria2.addUri",
-        "id":1,
-        "params":[[DownloadUrl],
+        "id":"1",
+        "params":[f"token:{RPC_SECRET}",
+                  [DownloadUrl],
                   {"out":Mp3Name,
                    "dir":outfloder,
-                   "split":"32",
-                   "max-connection-per-server":"5",
+                   "split":16,
+                   "max-connection-per-server":5,
                    "seed-ratio":"0.1"}]}
     Send = requests.post(JsonRpcUrl,json.dumps(PostData))
     if Send.status_code==200:
@@ -72,27 +74,30 @@ start = conf.get('DownLoadRange','Start')
 stop = conf.get('DownLoadRange','Stop')
 BookUrl = conf.get('BookUrl','BookUrl')
 JsonRpcUrl = conf.get('Air2','JsonRpcUrl')
+RPC_SECRET = conf.get('Air2','RPC_SECRET')
 outfloder = conf.get('Air2','Outfloder')
 delay = conf.get('Air2','Delay')
 login(account,password)
 # 解析下载链接
 if 'book' in BookUrl:
-    BookID = re.findall('book/(\d+)',BookUrl)[0]
+    BookID = re.findall(r'book/(\d+)', BookUrl)[0]
     BookDetailUrl = 'https://m.lrts.me/ajax/getBookInfo?id=%s'%BookID
     BookDetail = conn.get(BookDetailUrl,headers=headers).json()
     print('当前解析书籍：',BookDetail['name'],'---',BookDetail['author'])
-    ListUrl = 'https://m.lrts.me/ajax/getBookMenu?bookId=%s&pageNum=1&pageSize=5000&sortType=0'%BookID
+    ListUrl = 'https://m.lrts.me/ajax/getBookMenu?bookId=%s&pageNum=1&pageSize=50&sortType=0'%BookID
     LenDetail = conn.get(ListUrl,headers=headers).json()
-    AudioList = LenDetail['list']
+    AudioList = LenDetail.get('list', [])  # 如果不存在'list'键，返回空列表
     page = 1
     while True:
-        if len(AudioList) % 1000 ==0:
+        if len(AudioList) % 50 ==0: #调试完成改回50
             page+=1
             print('抓取第%s页……'%page)
+            #设置随机睡眠等待时间1-3秒
+            #sleep_time = random.randint(1, 3)
             time.sleep(5)
-            ListUrl = 'https://m.lrts.me/ajax/getBookMenu?bookId=%s&pageNum=%s&pageSize=5000&sortType=0'%(BookID,page)
+            ListUrl = 'https://m.lrts.me/ajax/getBookMenu?bookId=%s&pageNum=%s&pageSize=50&sortType=0'%(BookID,page)
             LenDetail = conn.get(ListUrl,headers=headers).json()
-            AudioList = AudioList + LenDetail['list']
+            AudioList += LenDetail.get('list', [])  # 若键不存在，返回空列表
         else :
             break
     Len = len(AudioList)        
@@ -106,11 +111,11 @@ if 'book' in BookUrl:
         SectionsJson = conn.get(SectionsUrl,headers=headers).json()
         try:
             DownloadUrl = SectionsJson['list'][0]['path']
-            Air2DownLoad(JsonRpcUrl,DownloadUrl,AudioName+GetExtension(DownloadUrl))
+            Air2DownLoad(JsonRpcUrl,RPC_SECRET,DownloadUrl,AudioName+GetExtension(DownloadUrl))
         except:
             print(AudioName,SectionsJson['msg'])
 elif 'album' in BookUrl:
-    AlbumID = re.findall('album/(\d+)',BookUrl)[0]
+    AlbumID = re.findall(r'album/(\d+)', BookUrl)[0]
     AlbumDetailUrl = 'https://m.lrts.me/ajax/getAlbumInfo?id=%s'%AlbumID
     AlbumDetail = conn.get(AlbumDetailUrl,headers=headers).json()
     print('当前解析专辑：',AlbumDetail['ablumn']['name'],'---',AlbumDetail['ablumn']['author'])
